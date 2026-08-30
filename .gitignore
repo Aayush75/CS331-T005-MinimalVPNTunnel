@@ -1,0 +1,15 @@
+# Copy of gitignore rules for the project tree (git root is the parent folder).
+code/bin/
+code/build/
+code/config.env
+code/keys/
+code/results/*
+!code/results/.gitkeep
+code/captures/*
+!code/captures/.gitkeep
+*.o
+*.pcap
+*.pcapng
+core
+vgcore.*
+more_docs
