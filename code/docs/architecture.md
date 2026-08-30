@@ -59,5 +59,6 @@ Poly1305 tag plus UDP (8) plus outer IPv4 (20) is 1472 bytes, under a common
 ## Privilege split
 
 `svpn` never calls `sudo`, never edits routes or firewalls, and never
-configures the TUN address. Scripts that the operator runs create `tun0`.
-That keeps the C program explainable and avoids silent privilege escalation.
+configures the TUN address. Separate scripts create and address `tun0`.
+That keeps device setup outside the tunnel process and avoids silent
+privilege escalation.

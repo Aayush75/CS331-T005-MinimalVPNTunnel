@@ -1,6 +1,4 @@
-# CS331-T005-MinimalVPNTunnel
-
-A Minimap VPN Tunnel. Implementation is in `code/`.
+# A Minimal VPN Tunnel
 
 ## Team ID - T005
 

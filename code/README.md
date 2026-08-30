@@ -43,6 +43,9 @@ packet, wraps it, and `sendto()`s it to B's Wi-Fi address. B authenticates or
 copies the payload and `write()`s it back into its TUN. The reverse path is
 symmetric after the handshake.
 
+Further detail: [docs/architecture.md](docs/architecture.md),
+[docs/protocol.md](docs/protocol.md).
+
 ## 3. Dependencies
 
 On the Fedora laptop:
@@ -72,7 +75,8 @@ cd code
 cp config.env.example config.env
 ```
 
-Edit `config.env` if DHCP changed the Wi-Fi addresses. Current lab values:
+Edit `config.env` if DHCP assigns different Wi-Fi addresses. The testbed used
+for this submission:
 
 ```text
 VPN_A_HOST / VPN_A_OUTER_IP = 10.7.51.1   (hostname vpn-a)
@@ -80,13 +84,11 @@ VPN_B_HOST / VPN_B_OUTER_IP = 10.7.50.242 (hostname vpn-b)
 PI_USER = cn
 ```
 
-`vpn-a` / `vpn-b` do not currently resolve from Fedora, so the example uses
-IPv4 addresses. Optional: `export SSHPASS=...` so scripts can SSH with
-`sshpass` (do not commit the password).
+Hosts are addressed by IPv4. Optional: `export SSHPASS=...` so scripts can SSH
+with `sshpass` (do not commit the password).
 
-If your workstation has a broken system-wide SSH include, set
-`SVPN_SSH_CONFIG=/dev/null` in your shell to make these scripts use only the
-standard SSH defaults.
+Optional: `SVPN_SSH_CONFIG=/dev/null` forces scripts to ignore a custom system
+SSH config and use standard defaults.
 
 ## 5. Deployment
 
@@ -185,6 +187,8 @@ Or from Fedora:
 ./scripts/smoke_test.sh negative
 ```
 
+See [docs/testing.md](docs/testing.md) for unit and integration coverage.
+
 ## 12. Stop / cleanup
 
 ```bash
@@ -194,13 +198,7 @@ Or from Fedora:
 
 `SIGINT`/`SIGTERM` also stop a foreground `svpn` and print counters.
 
-## 13. Submission checklist
-
-Before presenting, follow [docs/submission-checklist.md](docs/submission-checklist.md).
-It lists the evidence needed to substantiate forwarding, confidentiality, and
-the throughput/CPU claims rather than merely showing that the scripts exist.
-
-## 14. Benchmarks
+## 13. Benchmarks
 
 From Fedora, after preflight:
 
@@ -212,8 +210,7 @@ Default: 5 TCP iperf3 runs × 20 s (3 s omit) × 3 modes × 2 directions.
 Results land in `results/<timestamp>/summary.md`.
 
 See [docs/benchmarking.md](docs/benchmarking.md) for how to interpret
-direct vs plaintext vs encrypted, and [docs/analysis.md](docs/analysis.md)
-for a write-up of every campaign run on this testbed.
+direct vs plaintext vs encrypted throughput and CPU.
 
 Packet-size, RTT, latency-under-load, and UDP-loss sweeps:
 
@@ -221,10 +218,10 @@ Packet-size, RTT, latency-under-load, and UDP-loss sweeps:
 ./scripts/packet_experiments.sh
 ```
 
-Results land in `results/<timestamp>-packet/summary.md`. These do not replace
-the bulk TCP tables.
+Results land in `results/<timestamp>-packet/summary.md`. These complement the
+bulk TCP tables; they do not replace them.
 
-## 15. Capture demo
+## 14. Capture demo
 
 ```bash
 ./scripts/capture_demo.sh
@@ -236,25 +233,23 @@ Writes:
 - `captures/encrypted_wlan0.pcap` — marker **absent** (ciphertext + UDP)
 - `captures/plaintext_wlan0.pcap` — control: marker **visible** on Wi-Fi
 
-Open those files in a local Wireshark GUI if you have one. `tshark` is enough
-for automation.
+Open those files in Wireshark or inspect with `tshark`. On the encrypted
+outer capture the application marker is absent; on the plaintext control
+capture it is visible. Encryption hides the inner packet contents, not outer
+addresses, port, size, timing, or direction.
 
-For submission evidence, retain the three PCAPs and screenshots of the two
-outer-interface captures. The marker must be absent from encrypted `wlan0`
-traffic and visible in the plaintext control capture.
-
-## 16. Troubleshooting
+## 15. Troubleshooting
 
 | Symptom | What to check |
 |---|---|
 | SSH fails | `ssh cn@10.7.51.1` / `cn@10.7.50.242`; `export SSHPASS` |
-| Preflight IP mismatch | DHCP moved `wlan0`; update `config.env`, do not guess |
-| Ping A↔B over Wi-Fi fails | Client isolation; do not bypass campus controls |
+| Preflight IP mismatch | DHCP moved `wlan0`; update `config.env` |
+| Ping A↔B over Wi-Fi fails | Client isolation on the AP |
 | TUN open denied | `./scripts/setup_tun.sh` as the `cn` user; `/dev/net/tun` |
 | Handshake timeout | Start server first; UDP 55555; wrong peer IP |
-| Signature invalid | Re-run `provision_keys.sh`; do not mix keys across rebuilds |
+| Signature invalid | Re-run `provision_keys.sh`; keys must match the peer |
 | Ping tun works, TCP fails | MTU/firewall; confirm `tun0` MTU 1400 |
-| Route not `wlan0` | Stop; do not benchmark over Ethernet |
+| Route not `wlan0` | Confirm traffic uses Wi-Fi, not Ethernet |
 | Capture needs sudo | Script uses `sudo -S`; it will not edit sudoers |
 
 Useful diagnostics:
@@ -277,7 +272,7 @@ pidstat -u -p $(cat ~/code/run/svpn.pid) 1
 - No daemon privilege separation or production hardening
 - Inner IPv4 only; not an Internet gateway (no NAT / default-route takeover)
 
-## Build (on a Pi or a laptop with libsodium)
+## 17. Build
 
 ```bash
 make

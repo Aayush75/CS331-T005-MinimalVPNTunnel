@@ -16,7 +16,7 @@ than the others.
 | **plaintext** | inner TUN IPs, framing + UDP, no AEAD | userspace/tunnel cost |
 | **encrypted** | same as plaintext + handshake + ChaCha20-Poly1305 + replay | extra crypto cost |
 
-Required comparisons:
+Reported overheads:
 
 ```text
 tunnel overhead %              = (direct - plaintext) / direct * 100
@@ -24,9 +24,9 @@ incremental encryption %       = (plaintext - encrypted) / plaintext * 100
 total VPN overhead %           = (direct - encrypted) / direct * 100
 ```
 
-**Do not** label direct-vs-encrypted as “encryption overhead”. That gap also
+Direct-versus-encrypted is not labeled “encryption overhead”: that gap also
 includes TUN copies, userspace, UDP encapsulation, framing, and a smaller
-MTU. The incremental crypto comparison is plaintext vs encrypted.
+MTU. Incremental crypto cost is plaintext versus encrypted.
 
 Direct mode has no `svpn` process. CPU comparison is plaintext `svpn` `%CPU`
 vs encrypted `svpn` `%CPU` (`pidstat -u -p <pid> 1` on both Pis during iperf).
@@ -35,15 +35,15 @@ Report `encrypted CPU − plaintext CPU` in percentage points.
 ## Thermal
 
 If `vcgencmd` exists, temperature and `get_throttled` are stored before/after
-runs. Sticky bits such as `0x50000` mean under-voltage or throttling happened
-at some point in the boot/history; they are not hidden. If live throttling
-appears during final numbers, cool down and re-run.
+runs. Sticky bits such as `0x50000` mean under-voltage or throttling occurred
+at some point in the boot history. Live throttling during a measurement run
+invalidates that run; cool down and re-measure.
 
 ## Wi-Fi variability
 
-Both Pis and the laptop share the same managed network. Contention, RSSI, and
-AP scheduling can move throughput more than crypto does. Multiple runs and
-mean ± sample standard deviation are required for a defensible viva.
+Both Pis and the control host share the same managed network. Contention,
+RSSI, and AP scheduling can move throughput more than crypto does. Results
+are reported as mean ± sample standard deviation over multiple runs.
 
 Outer destinations are always the Wi-Fi IPs for direct mode; tunnel modes
 always use TUN IPs so a leftover `tun0` route cannot intercept the baseline.
